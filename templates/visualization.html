@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Visualization Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Visualization Page</h1>
+
+        <div id="chart"></div>
+
+        <label for="updatedXAxisLabel">Enter Updated X-Axis Label:</label>
+        <input type="text" id="updatedXAxisLabel">
+
+        <br><br>
+
+        <label for="updatedYAxisLabel">Enter Updated Y-Axis Label:</label>
+        <input type="text" id="updatedYAxisLabel">
+
+        <br><br>
+
+        <label for="updatedXValues">Enter Updated X-Axis Values:</label>
+        <textarea id="updatedXValues" rows="4" cols="50"></textarea>
+
+        <br><br>
+
+        <label for="updatedYValues">Enter Updated Y-Axis Values:</label>
+        <textarea id="updatedYValues" rows="4" cols="50"></textarea>
+
+        <br><br>
+
+        <!-- Filter Fields -->
+        <label for="xFilterType">X-Axis Filter Type:</label>
+        <select id="xFilterType">
+            <option value="greater">Greater Than</option>
+            <option value="less">Less Than</option>
+            <option value="equal">Equal To</option>
+        </select>
+
+        <label for="xFilterValue">X-Axis Filter Value:</label>
+        <input type="number" id="xFilterValue">
+
+        <br><br>
+
+        <label for="yFilterType">Y-Axis Filter Type:</label>
+        <select id="yFilterType">
+            <option value="greater">Greater Than</option>
+            <option value="less">Less Than</option>
+            <option value="equal">Equal To</option>
+        </select>
+
+        <label for="yFilterValue">Y-Axis Filter Value:</label>
+        <input type="number" id="yFilterValue">
+
+        <br><br>
+
+        <button id="applyFiltersButton">Apply Filters</button>
+        <button id="updateButton">Update Visualization</button>
+
+        <button id="scatterPlotButton">Scatter Plot</button>
+        <button id="linePlotButton">Line Plot</button>
+        <button id="pieChartButton">Pie Chart</button>
+        <button id="barPlotButton">Bar Plot</button>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        // Retrieve the query parameters from the URL
+        var urlParams = new URLSearchParams(window.location.search);
+        var xAxisLabel = urlParams.get('xAxisLabel');
+        var yAxisLabel = urlParams.get('yAxisLabel');
+        var xInputType = urlParams.get('xInputType');
+        var yInputType = urlParams.get('yInputType');
+        var xValues = urlParams.get('xValues').split(",");
+        var yValues = urlParams.get('yValues').split(",");
+
+        // Create your visualization using D3.js, based on the provided data
+        generateVisualization('scatter');
+
+        function generateVisualization(chartType) {
+            var margin = { top: 20, right: 20, bottom: 30, left: 50 };
+            var width = 600 - margin.left - margin.right;
+            var height = 400 - margin.top - margin.bottom;
+
+            var svg = d3.select('#chart')
+                .html('')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+            // Define the scales
+            var xScale = d3.scaleLinear()
+                .domain([0, d3.max(xValues, function (d) { return +d; })])
+                .range([0, width]);
+
+            var yScale = d3.scaleLinear()
+                .domain([0, d3.max(yValues, function (d) { return +d; })])
+                .range([height, 0]);
+
+            // Add x-axis
+            svg.append('g')
+                .attr('transform', 'translate(0,' + height + ')')
+                .call(d3.axisBottom(xScale));
+
+            // Add y-axis
+            svg.append('g')
+                .call(d3.axisLeft(yScale));
+
+            // Generate scatter plot
+            if (chartType === 'scatter') {
+                // Add data points
+                svg.selectAll('circle')
+                    .data(xValues)
+                    .enter()
+                    .append('circle')
+                    .attr('cx', function (d, i) {
+                        return xScale(+d);
+                    })
+                    .attr('cy', function (d, i) {
+                        return yScale(+yValues[i]);
+                    })
+                    .attr('r', 5);
+            }
+
+            // Generate line plot
+            if (chartType === 'line') {
+                svg.selectAll('circle').remove(); // Remove previous scatter plot
+
+                // Create line plot visualization
+                svg.append('path')
+                    .datum(xValues.map(Number))
+                    .attr('fill', 'none')
+                    .attr('stroke', 'steelblue')
+                    .attr('stroke-width', 2)
+                    .attr('d', d3.line()
+                        .x(function (d, i) { return xScale(d); })
+                        .y(function (d, i) { return yScale(+yValues[i]); })
+                    );
+            }
+
+            // Generate pie chart
+            if (chartType === 'pie') {
+                svg.selectAll('*').remove(); // Remove previous visualization
+
+                // Calculate the outer radius based on the size of the SVG container
+                var outerRadius = Math.min(width, height) / 2 - 10;
+
+                // Create pie chart visualization
+                var pie = d3.pie()(yValues.map(Number));
+                var color = d3.scaleOrdinal(d3.schemeCategory10);
+                var arc = d3.arc().innerRadius(0).outerRadius(outerRadius);
+
+                var pieChart = svg.selectAll('path')
+                    .data(pie)
+                    .enter()
+                    .append('path')
+                    .attr('d', arc)
+                    .attr('fill', function (d, i) { return color(i); });
+
+                // Add labels to the pie chart
+                var label = d3.arc().innerRadius(outerRadius * 0.5).outerRadius(outerRadius);
+                svg.selectAll('text')
+                    .data(pie)
+                    .enter()
+                    .append('text')
+                    .attr('transform', function (d) { return 'translate(' + label.centroid(d) + ')'; })
+                    .attr('dy', '0.35em')
+                    .text(function (d, i) { return xValues[i] + ' (' + d.value + ')'; });
+            }
+
+            // Generate bar plot
+            if (chartType === 'bar') {
+                svg.selectAll('*').remove(); // Remove previous visualization
+
+                // Define the x-axis scale
+                var xScale = d3.scaleBand()
+                    .domain(xValues)
+                    .range([0, width])
+                    .padding(0.1);
+
+                // Define the y-axis scale
+                var yScale = d3.scaleLinear()
+                    .domain([0, d3.max(yValues, d => parseFloat(d))])
+                    .range([height, 0]);
+
+                // Create the bars
+                var barChart = svg.selectAll('rect')
+                    .data(xValues)
+                    .enter()
+                    .append('rect')
+                    .attr('x', d => xScale(d))
+                    .attr('y', d => yScale(parseFloat(yValues[xValues.indexOf(d)])))
+                    .attr('width', xScale.bandwidth())
+                    .attr('height', d => height - yScale(parseFloat(yValues[xValues.indexOf(d)])))
+                    .attr('fill', 'steelblue');
+
+                // Add labels to the bar chart
+                svg.selectAll('text')
+                    .data(xValues)
+                    .enter()
+                    .append('text')
+                    .text((d, i) => `${d}: ${yValues[i]}`)
+                    .attr('x', d => xScale(d) + xScale.bandwidth() / 2)
+                    .attr('y', d => yScale(parseFloat(yValues[xValues.indexOf(d)])) - 5)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '12px')
+                    .attr('fill', 'black');
+            }
+
+            // Add x-axis label
+            svg.append('text')
+                .attr('transform', 'translate(' + (width / 2) + ' ,' + (height + margin.bottom - 10) + ')')
+                .style('text-anchor', 'middle')
+                .text(xAxisLabel);
+
+            // Add y-axis label
+            svg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', 0 - margin.left)
+                .attr('x', 0 - (height / 2))
+                .attr('dy', '1em')
+                .style('text-anchor', 'middle')
+                .text(yAxisLabel);
+        }
+
+        // Function to filter the data points based on user input
+        function filterDataPoints() {
+            var xFilterType = document.getElementById('xFilterType').value;
+            var xFilterValue = parseFloat(document.getElementById('xFilterValue').value);
+            var yFilterType = document.getElementById('yFilterType').value;
+            var yFilterValue = parseFloat(document.getElementById('yFilterValue').value);
+
+            // Apply X-axis filter
+            if (xFilterType === 'greater') {
+                xValues = xValues.filter(function (value) { return parseFloat(value) > xFilterValue; });
+            } else if (xFilterType === 'less') {
+                xValues = xValues.filter(function (value) { return parseFloat(value) < xFilterValue; });
+            } else if (xFilterType === 'equal') {
+                xValues = xValues.filter(function (value) { return parseFloat(value) === xFilterValue; });
+            }
+
+            // Apply Y-axis filter
+            if (yFilterType === 'greater') {
+                yValues = yValues.filter(function (value) { return parseFloat(value) > yFilterValue; });
+            } else if (yFilterType === 'less') {
+                yValues = yValues.filter(function (value) { return parseFloat(value) < yFilterValue; });
+            } else if (yFilterType === 'equal') {
+                yValues = yValues.filter(function (value) { return parseFloat(value) === yFilterValue; });
+            }
+
+            // Re-generate the visualization with the updated data
+            generateVisualization('scatter');
+        }
+
+        // Function to update the visualization based on user input
+        function updateVisualization() {
+            var updatedXAxisLabel = document.getElementById('updatedXAxisLabel').value;
+            var updatedYAxisLabel = document.getElementById('updatedYAxisLabel').value;
+            var updatedXValues = document.getElementById('updatedXValues').value.split(",");
+            var updatedYValues = document.getElementById('updatedYValues').value.split(",");
+
+            xAxisLabel = updatedXAxisLabel;
+            yAxisLabel = updatedYAxisLabel;
+            xValues = updatedXValues;
+            yValues = updatedYValues;
+
+            generateVisualization('scatter');
+        }
+
+        // Event listener for the "Apply Filters" button
+        var applyFiltersButton = document.getElementById('applyFiltersButton');
+        applyFiltersButton.addEventListener('click', filterDataPoints);
+
+        // Event listener for the "Update Visualization" button
+        var updateButton = document.getElementById('updateButton');
+        updateButton.addEventListener('click', updateVisualization);
+
+        // Event listeners for chart type buttons
+        var scatterPlotButton = document.getElementById('scatterPlotButton');
+        scatterPlotButton.addEventListener('click', function () {
+            generateVisualization('scatter');
+        });
+
+        var linePlotButton = document.getElementById('linePlotButton');
+        linePlotButton.addEventListener('click', function () {
+            generateVisualization('line');
+        });
+
+        var pieChartButton = document.getElementById('pieChartButton');
+        pieChartButton.addEventListener('click', function () {
+            generateVisualization('pie');
+        });
+
+        var barPlotButton = document.getElementById('barPlotButton');
+        barPlotButton.addEventListener('click', function () {
+            generateVisualization('bar');
+        });
+    </script>
+</body>
+</html>

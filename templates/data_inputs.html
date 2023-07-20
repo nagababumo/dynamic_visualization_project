@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Data Input Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+  <h1>Data Input Page</h1>
+  
+  <h2>Enter Data</h2>
+  
+  <label for="xAxisLabel">Enter X-Axis Label:</label>
+  <input type="text" id="xAxisLabel">
+  
+  <br><br>
+  
+  <label for="yAxisLabel">Enter Y-Axis Label:</label>
+  <input type="text" id="yAxisLabel">
+  
+  <br><br>
+  
+  <label for="xInputType">Select X-Axis Input Type:</label>
+  <select id="xInputType">
+    <option value="numerical">Numerical</option>
+    <option value="categorical">Categorical</option>
+    <option value="percentage">Percentage</option>
+  </select>
+  
+  <br><br>
+  
+  <label for="yInputType">Select Y-Axis Input Type:</label>
+  <select id="yInputType">
+    <option value="numerical">Numerical</option>
+    <option value="categorical">Categorical</option>
+    <option value="percentage">Percentage</option>
+  </select>
+  
+  <br><br>
+  
+  <label for="xValues">Enter X-Axis Values:</label>
+  <textarea id="xValues" rows="4" cols="50"></textarea>
+  
+  <br><br>
+  
+  <label for="yValues">Enter Y-Axis Values:</label>
+  <textarea id="yValues" rows="4" cols="50"></textarea>
+  
+  <br><br>
+  
+  <button onclick="generateVisualization()">Generate Visualization</button>
+  
+  <br><br>
+  
+  <script>
+    function generateVisualization() {
+      var xAxisLabel = document.getElementById("xAxisLabel").value;
+      var yAxisLabel = document.getElementById("yAxisLabel").value;
+      var xInputType = document.getElementById("xInputType").value;
+      var yInputType = document.getElementById("yInputType").value;
+      var xValues = document.getElementById("xValues").value;
+      var yValues = document.getElementById("yValues").value;
+
+      // Perform any necessary data processing or validation
+      // ...
+
+      // Redirect the user to the visualization page with the processed data
+      var url = "/visualization?xAxisLabel=" + xAxisLabel + "&yAxisLabel=" + yAxisLabel + "&xInputType=" + xInputType + "&yInputType=" + yInputType + "&xValues=" + xValues + "&yValues=" + yValues;
+      window.location.href = url;
+    }
+  </script>
+</body>
+</html>
